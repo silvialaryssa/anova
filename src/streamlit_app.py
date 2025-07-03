@@ -11,7 +11,16 @@ st.set_page_config(page_title="Análise ANOVA - Ames Housing", layout="wide")
 st.title("Análise Estatística com ANOVA - Ames Housing Dataset")
 
 #st.sidebar.header("Upload do Dataset")
-uploaded_file = 'src/AmesHousing.csv'  # Default file for demonstration
+#uploaded_file = 'src/AmesHousing.csv'  # Default file for demonstration
+
+uploaded_file = st.file_uploader("📁 Envie o arquivo AmesHousing.csv", type=["csv"])
+
+#if uploaded_file is not None:
+if st.button("📥 Carregar Dados"):
+    df = pd.read_csv(uploaded_file)
+st.success("Arquivo carregado com sucesso!")
+
+
 
 
 @st.cache_data
@@ -137,12 +146,25 @@ df_clean = df[[var_target, var1, var2, var3]].dropna()
 # Seção 1 - Análise Exploratória
 
 st.header(f"1. Análise Exploratória das Três Características (Assumindo Normalidade): {var1}, {var2} e {var3}")
+
+import altair as alt
+
 for var in [var1, var2, var3]:
     st.subheader(f"Distribuição de {var} vs Preço de Venda")
-    fig, ax = plt.subplots(figsize=(10, 5))
-    sns.boxplot(x=var, y=var_target, data=df_clean, ax=ax)
-    ax.set_xticklabels(ax.get_xticklabels(), rotation=45)
-    st.pyplot(fig)
+    chart_data = df_clean[[var, var_target]].dropna()
+    chart = alt.Chart(chart_data).mark_boxplot(extent='min-max').encode(
+        x=alt.X(f'{var}:N', title=var),
+        y=alt.Y(f'{var_target}:Q', title='Preço de Venda'),
+        color=alt.Color(f'{var}:N', legend=None)
+    ).properties(
+        width=700,
+        height=400,
+        title=f'Distribuição de {var} vs Preço de Venda'
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+
 
 # Seção 2 - ANOVA Onoway
 st.markdown("## ANOVA: Análise de Variância")
