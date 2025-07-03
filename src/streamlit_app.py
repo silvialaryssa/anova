@@ -14,7 +14,13 @@ st.title("Análise Estatística com ANOVA - Ames Housing Dataset")
 uploaded_file = 'src/AmesHousing.csv'  # Default file for demonstration
 
 
-df = pd.read_csv(uploaded_file)
+@st.cache_data
+def carregar_dados():
+    return pd.read_csv(uploaded_file)
+
+df = carregar_dados()
+
+#df = pd.read_csv(uploaded_file)
 st.success("Arquivo carregado com sucesso!")
 
  # Seção extra - Visualização das colunas
@@ -192,13 +198,13 @@ with st.expander("Clique para visualizar o relatório consolidado"):
 
 ### Variáveis analisadas:
 - Bairro (Neighborhood)
-- Tipo de Garagem (GarageType)
-- Número de Lareiras (Fireplaces)
+- Estilo da Casa (House Style)
+- Banheiros no Porão (Bsmt Full Bath)
 
 ### Resultados da ANOVA:
 - Neighborhood: {0:.4f}
-- GarageType: {1:.4f}
-- Fireplaces: {2:.4f}
+- House Styl: {1:.4f}
+- Bsmt Full Bath: {2:.4f}
 
 ### Interpretação:
 - A ANOVA revelou diferenças estatisticamente significativas nos preços médios com base em algumas características, conforme os valores de p apresentados.

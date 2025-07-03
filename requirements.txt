@@ -1,3 +1,9 @@
 altair
 pandas
 streamlit
+streamlit
+pandas
+matplotlib
+seaborn
+scipy
+statsmodels
