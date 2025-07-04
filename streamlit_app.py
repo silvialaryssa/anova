@@ -20,7 +20,7 @@ st.title("Análise Estatística com ANOVA - Ames Housing Dataset")
 # ================================
 # FUNÇÕES UTILITÁRIAS
 # ================================
-uploaded_file = 'AmesHousing.csv'  # Default file for demonstration
+uploaded_file = 'src/AmesHousing.csv'  # Default file for demonstration
 @st.cache_data
 def carregar_dados(uploaded_file):
  return pd.read_csv(uploaded_file)
