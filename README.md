@@ -1,19 +1,9 @@
 ---
-title: Anova
-emoji: 🚀
-colorFrom: red
-colorTo: red
-sdk: docker
-app_port: 8501
-tags:
-- streamlit
+title: Simulação de Monte Carlo com Binomial
+colorFrom: pink
+colorTo: indigo
+sdk: streamlit
+sdk_version: "1.32.0"
+app_file: src/streamlit_app
 pinned: false
-short_description: Investigação via ANOVA
 ---
-
-# Welcome to Streamlit!
-
-Edit `/src/streamlit_app.py` to customize this app to your heart's desire. :heart:
-
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
