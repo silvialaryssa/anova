@@ -25,22 +25,98 @@ def carregar_dados(uploaded_file):
  return pd.read_csv(uploaded_file)
 
 def exibir_colunas_descricao(df):
-    descricoes = {        
-        'Order': 'Identificador de ordem no dataset',
-        'PID': 'Identificador único da propriedade',
-        'MS_SubClass': 'Tipo de construção (código)',
-        'Neighborhood': 'Bairro onde a casa está localizada',
-        'House_Style': 'Estilo da residência',
-        'Bsmt_Full_Bath': 'Banheiro completo no porão',
-        'SalePrice': 'Preço final de venda da casa'
-    }
+    descricoes = {
+    'Order': 'Identificador de ordem no dataset',
+    'PID': 'Identificador único da propriedade',
+    'MS SubClass': 'Tipo de construção (código)',
+    'MS Zoning': 'Classificação de zoneamento da propriedade',
+    'Lot Frontage': 'Frente do lote (em pés)',
+    'Lot Area': 'Área total do lote (em pés quadrados)',
+    'Street': 'Tipo de rua de acesso',
+    'Alley': 'Tipo de beco de acesso (se houver)',
+    'Lot Shape': 'Formato do lote',
+    'Land Contour': 'Contorno do terreno',
+    'Utilities': 'Serviços públicos disponíveis',
+    'Lot Config': 'Configuração do lote',
+    'Land Slope': 'Inclinação do terreno',
+    'Neighborhood': 'Bairro onde a casa está localizada',
+    'Condition 1': 'Proximidade com vias principais ou outras condições',
+    'Condition 2': 'Condição adicional',
+    'Bldg Type': 'Tipo de edificação',
+    'House Style': 'Estilo da residência',
+    'Overall Qual': 'Qualidade geral do material e acabamento',
+    'Overall Cond': 'Condição geral da casa',
+    'Year Built': 'Ano de construção',
+    'Year Remod/Add': 'Ano da última reforma ou adição',
+    'Roof Style': 'Estilo do telhado',
+    'Roof Matl': 'Material do telhado',
+    'Exterior 1st': 'Acabamento externo primário',
+    'Exterior 2nd': 'Acabamento externo secundário',
+    'Mas Vnr Type': 'Tipo de revestimento de alvenaria',
+    'Mas Vnr Area': 'Área de revestimento de alvenaria',
+    'Exter Qual': 'Qualidade do acabamento externo',
+    'Exter Cond': 'Condição do acabamento externo',
+    'Foundation': 'Tipo de fundação',
+    'Bsmt Qual': 'Qualidade do porão',
+    'Bsmt Cond': 'Condição do porão',
+    'Bsmt Exposure': 'Exposição do porão à luz natural',
+    'BsmtFin Type 1': 'Tipo de acabamento do porão 1',
+    'BsmtFin SF 1': 'Área do porão finalizada (tipo 1)',
+    'BsmtFin Type 2': 'Tipo de acabamento do porão 2',
+    'BsmtFin SF 2': 'Área do porão finalizada (tipo 2)',
+    'Bsmt Unf SF': 'Área do porão não finalizada',
+    'Total Bsmt SF': 'Área total do porão',
+    'Heating': 'Tipo de aquecimento',
+    'Heating QC': 'Qualidade do sistema de aquecimento',
+    'Central Air': 'Possui ar condicionado central',
+    'Electrical': 'Sistema elétrico',
+    '1st Flr SF': 'Área do primeiro andar',
+    '2nd Flr SF': 'Área do segundo andar',
+    'Low Qual Fin SF': 'Área de baixa qualidade finalizada',
+    'Gr Liv Area': 'Área total habitável acima do solo',
+    'Bsmt Full Bath': 'Banheiro completo no porão',
+    'Bsmt Half Bath': 'Meio banheiro no porão',
+    'Full Bath': 'Banheiros completos acima do solo',
+    'Half Bath': 'Meios banheiros acima do solo',
+    'Bedroom AbvGr': 'Número de quartos acima do solo',
+    'Kitchen AbvGr': 'Número de cozinhas acima do solo',
+    'Kitchen Qual': 'Qualidade da cozinha',
+    'TotRms AbvGrd': 'Total de cômodos acima do solo',
+    'Functional': 'Funcionalidade da casa',
+    'Fireplaces': 'Número de lareiras',
+    'Fireplace Qu': 'Qualidade das lareiras',
+    'Garage Type': 'Tipo de garagem',
+    'Garage Yr Blt': 'Ano de construção da garagem',
+    'Garage Finish': 'Acabamento da garagem',
+    'Garage Cars': 'Capacidade de carros na garagem',
+    'Garage Area': 'Área da garagem',
+    'Garage Qual': 'Qualidade da garagem',
+    'Garage Cond': 'Condição da garagem',
+    'Paved Drive': 'Entrada pavimentada',
+    'Wood Deck SF': 'Área do deck de madeira',
+    'Open Porch SF': 'Área da varanda aberta',
+    'Enclosed Porch': 'Área da varanda fechada',
+    '3Ssn Porch': 'Área da varanda de três estações',
+    'Screen Porch': 'Área da varanda com tela',
+    'Pool Area': 'Área da piscina',
+    'Pool QC': 'Qualidade da piscina',
+    'Fence': 'Tipo de cerca',
+    'Misc Feature': 'Recursos adicionais (elevador, etc.)',
+    'Misc Val': 'Valor dos recursos adicionais',
+    'Mo Sold': 'Mês da venda',
+    'Yr Sold': 'Ano da venda',
+    'Sale Type': 'Tipo de venda',
+    'Sale Condition': 'Condição da venda',
+    'SalePrice': 'Preço final de venda da casa'
+}
+
 
     df.columns = df.columns.str.replace(' ', '_')
 
     st.subheader("Descrição das Colunas")
     colunas_df = pd.DataFrame({
         "Coluna": df.columns,
-        "Descrição": [descricoes.get(col, "") for col in df.columns]
+        "Descrição": [descricoes.get(col.replace('_', ' '), descricoes.get(col, "")) for col in df.columns]
     })
     st.dataframe(colunas_df)
 
@@ -151,6 +227,7 @@ for var in [var1, var2, var3]:
 # POST-HOC: Teste de Tukey
 # ================================
 def tukey_posthoc_plot(df, var_cat, var_target):
+    st.subheader(f"Teste Post-Hoc: Tukey HSD para {var_cat}")
     st.subheader(f"Tukey HSD: Comparações entre categorias de {var_cat}")
     try:
         tukey = pairwise_tukeyhsd(endog=df[var_target], groups=df[var_cat], alpha=0.05)
@@ -186,6 +263,7 @@ def tukey_posthoc_plot(df, var_cat, var_target):
                 tooltip=['Comparison', 'meandiff', 'p-adj']
             ).properties(width=400, height=200)
 
+            st.subheader(f"Gráfico de Diferenças de Médias - {var_cat}")
             st.altair_chart(chart, use_container_width=True)
 
             # Interpretação automática
@@ -209,27 +287,92 @@ for var in [var1, var2, var3]:
 # ================================
 # RELATÓRIO FINAL
 # ================================
-st.header("📄 Relatório Final da Análise")
+st.header("📘 Relatório Final - Análise de Variância (ANOVA) no Ames Housing Dataset")
+
 st.markdown("""
-### Análise dos Q-Q Plots
-- **Neighborhood**: desvio da normalidade → efeitos distintos no preço.
-- **House_Style**: aproximação razoável à normalidade.
-- **Bsmt_Full_Bath**: boa aderência à normalidade.
+### 🔍 1. Análise dos Q-Q Plots
+Os Q-Q Plots das médias de preço por categoria foram utilizados para verificar a normalidade das médias dos grupos para cada variável categórica analisada:
 
-### Análise dos Boxplots
-- **Neighborhood**: variações amplas e heterogêneas.
-- **House_Style**: diferenças visíveis nas medianas.
-- **Bsmt_Full_Bath**: tendência clara de aumento de preço com número de banheiros.
+**Neighborhood (Bairro):**  
+Os pontos se afastam significativamente da linha de referência, sugerindo violação da normalidade — o que indica que os bairros possuem padrões distintos e não seguem uma distribuição normal conjunta.
 
-### Conclusões dos Testes Estatísticos
-- **Todos os p-valores da ANOVA** foram menores que 0.001.
-- **Todos os testes de Shapiro-Wilk e Breusch-Pagan** indicaram violação dos pressupostos.
-- Utilizado **teste de Kruskal-Wallis** como alternativa.
+**House_Style (Estilo da Casa):**  
+Os pontos estão relativamente próximos da linha, com leves desvios — o que sugere uma distribuição aproximadamente normal, embora outros testes sejam necessários para confirmar.
 
-### Testes Post Hoc (Tukey HSD)
-- Diferenciação estatística significativa entre diversas categorias.
-- Evidências claras de influência dessas variáveis no **preço de venda**.
+**Bsmt_Full_Bath (Banheiro Completo no Porão):**  
+Os pontos estão muito próximos da linha reta, indicando uma forte aderência à normalidade das médias entre os grupos.
 
-### Conclusão Geral
-A ANOVA tradicional não foi adequada devido à violação dos pressupostos de normalidade e homocedasticidade. O uso do teste **Kruskal-Wallis** foi necessário e apropriado. Com base nas análises, conclui-se que as variáveis **Neighborhood**, **House_Style** e **Bsmt_Full_Bath** têm **influência estatisticamente significativa sobre os preços das casas** no dataset Ames Housing.
+---
+
+### 📦 2. Análise dos Boxplots
+Os boxplots mostram a distribuição do preço de venda para cada categoria das variáveis:
+
+**Neighborhood:**  
+Apresenta grande variabilidade nos preços dentro e entre os bairros, com dispersões heterogêneas e valores discrepantes, reforçando a ideia de diferenças significativas entre os grupos.
+
+**House_Style:**  
+As distribuições são mais homogêneas, mas ainda há diferenças visíveis nas medianas, especialmente entre estilos mais comuns e menos comuns.
+
+**Bsmt_Full_Bath:**  
+Os grupos têm uma distribuição mais clara, com aumento progressivo dos preços com o número de banheiros, sugerindo uma tendência linear ou ordinal.
+
+---
+
+### 📈 3. Testes Estatísticos (ANOVA e Pós-Hoc)
+
+| Variável          | ANOVA p-valor | Shapiro-Wilk (Normalidade) | Breusch-Pagan (Homoscedasticidade) | ANOVA Tradicional Adequada? |
+|-------------------|---------------|-----------------------------|------------------------------------|-----------------------------|
+| Neighborhood      | < 0.0001      | ❌ Não (p < 0.05)           | ❌ Não (p < 0.05)                   | ❌ Não                      |
+| House_Style       | < 0.0001      | ❌ Não (p < 0.05)           | ❌ Não (p < 0.05)                   | ❌ Não                      |
+| Bsmt_Full_Bath    | < 0.0001      | ❌ Não (p < 0.05)           | ❌ Não (p < 0.05)                   | ❌ Não                      |
+
+📌 **Conclusão:** Em nenhuma das variáveis os pressupostos da ANOVA tradicional foram atendidos. Portanto, testes alternativos não paramétricos foram utilizados.
+
+---
+
+### 🔁 Kruskal-Wallis
+Todas as variáveis apresentaram **p-valor < 0.05**, confirmando que há **diferenças estatísticas significativas entre os grupos** em cada uma delas.
+
+---
+
+### 🔬 Teste Post Hoc (Tukey HSD)
+O teste de Tukey HSD identificou várias diferenças significativas entre pares de categorias para todas as variáveis analisadas.  
+As comparações com maiores diferenças de médias foram evidenciadas nos gráficos e tabelas geradas no app.  
+O gráfico de barras auxilia na interpretação visual dos pares com diferenças mais relevantes.
+
+---
+
+### 🧠 Conclusão Geral
+As variáveis categóricas **Neighborhood**, **House_Style** e **Bsmt_Full_Bath** influenciam significativamente o preço de venda das casas.  
+A ANOVA tradicional não foi adequada, pois os testes de normalidade e homocedasticidade falharam para todas as variáveis.  
+O uso de testes **não paramétricos** como o **Kruskal-Wallis** foi essencial e revelou diferenças significativas entre os grupos.  
+O teste de **Tukey HSD** complementou a análise, detalhando quais pares de categorias apresentam as maiores diferenças de preço.
+
+
+### 🧠 Conclusão Geral
+**PPCA**: Programa de Computação Aplicada - UNB  
+**AEDI**: Análise Estatística de Dados e Informações  
+**Prof.** João Gabriel de Moraes Souza
+**Aluna:** Silva Laryssa Branco da Silva
+**Data:** 2024-01-15
+
+---
+
+
+### Autores e Referências
+- **PPCA**: Programa de Computação Aplicada - UNB  
+- **AEDI**: Análise Estatística de Dados e Informações  
+- **Prof.** João Gabriel de Moraes Souza  
+- **Aluna**: Silva Laryssa Branco da Silva  
+- **Data**: 2024-01-15
+
+
+### 🔗 Links
+
+- 📊 Projeto no Community Cloud: [https://aedianova.streamlit.app/](https://aedianova.streamlit.app/)  
+- 💻 Código fonte GitHub: [https://github.com/silvialaryssa/anova](https://github.com/silvialaryssa/anova)
+
+
 """)
+
+
