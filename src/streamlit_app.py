@@ -113,12 +113,21 @@ def exibir_colunas_descricao(df):
 
     df.columns = df.columns.str.replace(' ', '_')
 
-    st.subheader("Descrição das Colunas")
+    st.subheader("Descrição de todas as colunas")
     colunas_df = pd.DataFrame({
         "Coluna": df.columns,
         "Descrição": [descricoes.get(col.replace('_', ' '), descricoes.get(col, "")) for col in df.columns]
     })
     st.dataframe(colunas_df)
+    
+# Categorias selecionadas para análise
+    st.subheader("Colunas selecionadas para análise")
+    colunas_selecionadas = ['SalePrice', 'Neighborhood', 'House_Style', 'Bsmt_Full_Bath']    
+    st.dataframe(df[colunas_selecionadas].head())
+    
+# ================================
+# Q-Q Plot das Médias    
+# ================================    
 
 def qq_plot_medias(df, var_categ, var_target):
     medias = df.groupby(var_categ)[var_target].mean().dropna()
@@ -132,6 +141,10 @@ def qq_plot_medias(df, var_categ, var_target):
     plt.grid(True)
     plt.tight_layout()
     return fig
+
+# ================================
+# ANOVA E AVALIAÇÃO DAS VARIÁVEIS
+# ================================
 
 def avaliar_variavel(var, df_clean, var_target):
     st.subheader(f"Variável: {var}")
@@ -168,6 +181,9 @@ def avaliar_variavel(var, df_clean, var_target):
     if shapiro.pvalue < 0.05 or bp_test[1] < 0.05:
         kruskal = stats.kruskal(*grupos)
         st.warning(f"ANOVA não atende pressupostos. Usando Kruskal-Wallis: p = {kruskal.pvalue:.4f}")
+        st.success("Pressupostos não atendidos, logo o teste não paramétrico - Kruskal-Wallis foi aplicado.")
+        if kruskal.pvalue < 0.001:
+            st.markdown("🔬 **Conclusão**: Existe uma **diferença estatisticamente muito significativa** entre as medianas dos grupos.")
     else:
         st.success("Pressupostos atendidos para ANOVA tradicional")
 
@@ -186,6 +202,7 @@ var_target = 'SalePrice'
 var1 = 'Neighborhood'
 var2 = 'House_Style'
 var3 = 'Bsmt_Full_Bath'
+#var3 = 'Fence'  # Alterado para 'Yr_Sold' como exemplo
 df_clean = df[[var_target, var1, var2, var3]].dropna()
 
 # ================================
@@ -215,11 +232,96 @@ for var in [var1, var2, var3]:
         color=alt.Color(f'{var}:N', legend=None)
     ).properties(width=400, height=200)
     st.altair_chart(chart, use_container_width=True)
+    
+# ================================
+# ANOVA de múltiplos fatores (Two-Way ou mais)
+# ================================    
+import statsmodels.api as sm
+import statsmodels.formula.api as smf
 
+# Modelo ANOVA com 3 variáveis categóricas
+##modelo = smf.ols('SalePrice ~ C(Neighborhood) + C(House_Style) + C(Bsmt_Full_Bath)', data=df_clean).fit()
+##anova_tabela = sm.stats.anova_lm(modelo, typ=2)
+
+##st.header("🧠 Interpretação dos Resultados - ANOVA - Tow Way")
+
+##for fator in ['C(Neighborhood)', 'C(House_Style)', 'C(Bsmt_Full_Bath)']:
+##    p_valor = anova_tabela.loc[fator, 'PR(>F)']
+##    f_stat  = anova_tabela.loc[fator, 'F']
+    
+##    if p_valor < 0.001:
+##        st.success(f"🔹 {fator}: Influência **muito significativa** sobre o preço de venda (F = {f_stat:.2f}, p < 0.001).")
+##    elif p_valor < 0.05:
+##        st.info(f"🔹 {fator}: Influência **significativa** sobre o preço de venda (F = {f_stat:.2f}, p = {p_valor:.4f}).")
+##    else:
+##        st.warning(f"🔹 {fator}: **Sem influência estatisticamente significativa** (F = {f_stat:.2f}, p = {p_valor:.4f}).")
+
+
+
+##st.subheader("📊 ANOVA Two-way (Neighborhood + House_Style + Bsmt_Full_Bath)")
+##st.dataframe(anova_tabela)
+
+#modelo_interacao = smf.ols('SalePrice ~ C(Neighborhood) * C(House_Style) + C(Bsmt_Full_Bath)', data=df_clean).fit()
+#anova_inter = sm.stats.anova_lm(modelo_interacao, typ=2)
+#st.subheader("📊 ANOVA com Interação (Neighborhood * House_Style)")
+#st.dataframe(anova_inter)
+
+#######################################################################################################################
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
+
+def anova_multifatorial(df, var_target, fatores):
+    """
+    Executa ANOVA multifatorial e interpreta resultados.
+
+    Parâmetros:
+    - df: DataFrame com os dados
+    - var_target: string com o nome da variável resposta
+    - fatores: lista de strings com os nomes das variáveis categóricas
+    """
+
+    # Monta a fórmula para o modelo, aplicando C() em cada fator
+    fatores_formula = ' + '.join([f'C({f})' for f in fatores])
+    formula = f'{var_target} ~ {fatores_formula}'
+
+    # Ajusta o modelo e calcula ANOVA
+    modelo = smf.ols(formula, data=df).fit()
+    anova_tabela = sm.stats.anova_lm(modelo, typ=2)
+
+    # Título interpretativo
+    st.header(f"🧠 Interpretação dos Resultados - ANOVA  Two-way")
+    
+    # Interpretação de cada fator
+    for fator in [f'C({f})' for f in fatores]:
+        p_valor = anova_tabela.loc[fator, 'PR(>F)']
+        f_stat  = anova_tabela.loc[fator, 'F']
+        
+        if p_valor < 0.001:
+            st.success(f"🔹 {fator}: Influência **muito significativa** (F = {f_stat:.2f}, p < 0.001).")
+        elif p_valor < 0.05:
+            st.info(f"🔹 {fator}: Influência **significativa** (F = {f_stat:.2f}, p = {p_valor:.4f}).")
+        else:
+            st.warning(f"🔹 {fator}: **Sem influência significativa** (F = {f_stat:.2f}, p = {p_valor:.4f}).")
+
+    # Exibe a tabela ANOVA
+    st.subheader(f"📊 ANOVA Two-way ({' + '.join(fatores)})")
+    st.dataframe(anova_tabela)
+
+    return anova_tabela  # opcional: retorna a tabela para uso externo
+
+fatores = [var1,var2,var3]
+anova_multifatorial(df_clean, var_target='SalePrice', fatores=fatores)
+
+
+
+
+######################################################################################################################
+
+       
 # ================================
 # AVALIAÇÃO DAS VARIÁVEIS
 # ================================
-st.header("Avaliação Estatística das Variáveis")
+st.header("🧠 Interpretação dos Resultados - ANOVA On way para cada Variável")
 for var in [var1, var2, var3]:
     avaliar_variavel(var, df_clean, var_target)
 
@@ -227,7 +329,7 @@ for var in [var1, var2, var3]:
 # POST-HOC: Teste de Tukey
 # ================================
 def tukey_posthoc_plot(df, var_cat, var_target):
-    st.subheader(f"Teste Post-Hoc: Tukey HSD para {var_cat}")
+    st.subheader(f"Teste Post-Hoc: Tukey HSD - Para sabe onde é a dirença dentro do gurpo {var_cat}")
     st.subheader(f"Tukey HSD: Comparações entre categorias de {var_cat}")
     try:
         tukey = pairwise_tukeyhsd(endog=df[var_target], groups=df[var_cat], alpha=0.05)
@@ -280,8 +382,72 @@ def tukey_posthoc_plot(df, var_cat, var_target):
     except Exception as e:
         st.warning(f"Erro ao executar Tukey para {var_cat}: {e}")
 
+#for var in [var1, var2, var3]:
+    #tukey_posthoc_plot(df_clean, var, var_target)
+
+
+# Gameshowe's test
+import pingouin as pg
+import altair as alt
+
+def gameshowell_posthoc_plot(df, var_cat, var_target):
+    st.subheader(f"Teste Post-Hoc: Games-Howell - Comparações em {var_cat}")
+
+    try:
+        # Garantindo os tipos corretos
+        df[var_cat] = df[var_cat].astype(str)  # trata como categórica
+        df[var_target] = pd.to_numeric(df[var_target], errors='coerce')
+        dados = df[[var_cat, var_target]].dropna()
+
+        # Aplicando o teste de Games-Howell
+        resultado = pg.pairwise_gameshowell(dv=var_target, between=var_cat, data=dados)
+
+        # Filtro de comparações significativas
+        resultado['significant'] = resultado['pval'] < 0.05
+        sig_df = resultado[resultado['significant']].copy()
+
+        st.write(f"Total de comparações: {len(resultado)}")
+        st.write(f"Comparações significativas (p < 0.05): {len(sig_df)}")
+
+        if sig_df.empty:
+            st.info("Nenhuma diferença estatística significativa encontrada entre os pares de categorias.")
+            return
+
+        # Preparando os dados para visualização
+        sig_df['Comparison'] = sig_df['A'] + ' vs ' + sig_df['B']
+        sig_df['meandiff'] = sig_df['diff']
+
+        # Tabela com os principais dados
+        st.dataframe(sig_df[['Comparison', 'meandiff', 'pval', 'significant']])
+
+        # Gráfico de barras
+        chart = alt.Chart(sig_df).mark_bar(color='orange').encode(
+            x=alt.X('meandiff:Q', title='Diferença de Médias'),
+            y=alt.Y('Comparison:N', sort='-x', title='Comparação'),
+            tooltip=['Comparison', 'meandiff', 'pval']
+        ).properties(width=400, height=250)
+
+        st.subheader(f"Gráfico de Diferenças de Médias - {var_cat}")
+        st.altair_chart(chart, use_container_width=True)
+
+        # Interpretação automática
+        maiores_diffs = sig_df.loc[sig_df['meandiff'].abs().nlargest(3).index]
+        exemplo = maiores_diffs.iloc[0]
+        interpretacao = (
+            f"💡 Foram encontradas **{len(sig_df)} comparações com diferenças significativas** entre as categorias de **{var_cat}**.\n\n"
+            f"A maior diferença foi observada entre **{exemplo['Comparison']}**, com uma média de diferença de aproximadamente "
+            f"**{exemplo['meandiff']:.2f}** no preço de venda.\n\n"
+            f"Essas diferenças indicam que algumas categorias de **{var_cat}** influenciam significativamente os preços médios das casas."
+        )
+        st.markdown(interpretacao)
+
+    except Exception as e:
+        st.error(f"Erro ao executar Games-Howell para {var_cat}: {e}")
+# Executando o Games-Howell para cada variável categórica
 for var in [var1, var2, var3]:
-    tukey_posthoc_plot(df_clean, var, var_target)
+    gameshowell_posthoc_plot(df_clean, var, var_target)
+
+
 
 
 # ================================
@@ -330,36 +496,56 @@ Os grupos têm uma distribuição mais clara, com aumento progressivo dos preço
 
 ---
 
-### 🔁 Kruskal-Wallis
-Todas as variáveis apresentaram **p-valor < 0.05**, confirmando que há **diferenças estatísticas significativas entre os grupos** em cada uma delas.
+### 📊 4. Teste de Shapiro-Wilk
+
+O teste de Shapiro-Wilk verifica se uma distribuição é significativamente diferente  
+de uma normal. Embora eficaz, ele é sensível a grandes amostras, nas quais  
+pequenos desvios da normalidade já geram p-valores baixos.
+
+No nosso caso, foi usado para testar a **normalidade dos resíduos da ANOVA**.  
+Todas as variáveis apresentaram **p < 0.05**, indicando violação da normalidade.
 
 ---
 
-### 🔬 Teste Post Hoc (Tukey HSD)
-O teste de Tukey HSD identificou várias diferenças significativas entre pares de categorias para todas as variáveis analisadas.  
-As comparações com maiores diferenças de médias foram evidenciadas nos gráficos e tabelas geradas no app.  
-O gráfico de barras auxilia na interpretação visual dos pares com diferenças mais relevantes.
+### 🔁 Teste Não Paramétrico (Kruskal-Wallis)
+
+Segundo Andy Field (2009), a ANOVA de um fator tem como equivalente não paramétrico  
+o **teste de Kruskal-Wallis**, recomendado quando pressupostos como normalidade  
+ou homocedasticidade são violados.
+
+Diante da violação dos pressupostos, aplicamos o Kruskal-Wallis.  
+**Todas as variáveis apresentaram p < 0.05**, confirmando diferenças entre os grupos.
+
+---
+
+### 🔬 Teste Post Hoc (Games-Howell)
+
+Andy Field (2009) recomenda o **teste de Games-Howell** quando há dúvida sobre  
+a homogeneidade das variâncias ou quando os tamanhos amostrais são muito diferentes.  
+É uma alternativa robusta ao teste de Tukey tradicional.
+
+Substituímos o Tukey pelo Games-Howell, que identificou  
+**diferenças estatísticas significativas entre as categorias** para todas as variáveis.
 
 ---
 
 ### 🧠 Conclusão Geral
-As variáveis categóricas **Neighborhood**, **House_Style** e **Bsmt_Full_Bath** influenciam significativamente o preço de venda das casas.  
-A ANOVA tradicional não foi adequada, pois os testes de normalidade e homocedasticidade falharam para todas as variáveis.  
-O uso de testes **não paramétricos** como o **Kruskal-Wallis** foi essencial e revelou diferenças significativas entre os grupos.  
-O teste de **Tukey HSD** complementou a análise, detalhando quais pares de categorias apresentam as maiores diferenças de preço.
 
+As variáveis **Neighborhood**, **House_Style** e **Bsmt_Full_Bath** afetam de forma  
+estatisticamente significativa o preço de venda das casas.  
 
-### 🧠 Conclusão Geral
-**PPCA**: Programa de Computação Aplicada - UNB  
-**AEDI**: Análise Estatística de Dados e Informações  
-**Prof.** João Gabriel de Moraes Souza
-**Aluna:** Silva Laryssa Branco da Silva
-**Data:** 2024-01-15
+Como os pressupostos da ANOVA tradicional foram violados, utilizamos o **Kruskal-Wallis**,  
+e como teste post hoc, o **Games-Howell**, apropriado para variâncias desiguais.  
+Ambos os testes reforçaram a presença de diferenças relevantes entre os grupos.
 
 ---
 
+### 📚 Referências
+- Field, A. (2009). Descobrindo a estatística usando o SPSS. 2. ed. Porto Alegre: Artmed, 2009
 
-### Autores e Referências
+---
+
+### Autores
 - **PPCA**: Programa de Computação Aplicada - UNB  
 - **AEDI**: Análise Estatística de Dados e Informações  
 - **Prof.** João Gabriel de Moraes Souza  
@@ -374,5 +560,74 @@ O teste de **Tukey HSD** complementou a análise, detalhando quais pares de cate
 
 
 """)
+
+
+#import pandas as pd
+#import statsmodels.formula.api as smf
+#from statsmodels.stats.diagnostic import het_breuschpagan
+#from scipy import stats
+#import streamlit as st
+
+# ========================
+# Avaliação dos pressupostos
+# ========================
+
+
+#st.header("🧪 Avaliação dos Pressupostos da ANOVA - Variáveis Categóricas")
+
+#cat_cols = df.select_dtypes(include=['object', 'category']).columns.tolist()
+
+# Remoções seguras (evita erro se não existir)
+#for col in ['SalePrice', 'PID']:
+#    if col in cat_cols:
+#        cat_cols.remove(col)
+
+#resultado_pressupostos = []
+
+#for var in cat_cols:
+ #   try:
+  #      grupos = [group['SalePrice'].values for name, group in df.groupby(var)]
+        
+        # Remove variáveis com apenas 1 grupo ou grupos muito pequenos
+  #      if len(grupos) < 2 or any(len(g) < 3 for g in grupos):
+  #          continue
+
+        # ANOVA
+  #      modelo = smf.ols(f'SalePrice ~ C({var})', data=df).fit()
+  #      residuos = modelo.resid
+
+        # Testes
+  #     shapiro = stats.shapiro(residuos)
+  #      bp_test = het_breuschpagan(residuos, modelo.model.exog)
+
+  #      resultado_pressupostos.append({
+  #          'Variável': var,
+  #          'Grupos': len(grupos),
+  #          'Shapiro-Wilk (p)': round(shapiro.pvalue, 4),
+  #          'Breusch-Pagan (p)': round(bp_test[1], 4),
+  #          'Atende Pressupostos': shapiro.pvalue >= 0.05 and bp_test[1] >= 0.05
+  #      })
+  #  except Exception as e:
+  #      st.warning(f"⚠️ Erro ao processar {var}: {e}")
+
+# ========================
+# Exibição dos resultados
+# ========================
+
+#if resultado_pressupostos:
+#    df_resultado = pd.DataFrame(resultado_pressupostos)
+
+#    st.subheader("📋 Resultado dos Testes de Pressupostos")
+#    st.dataframe(df_resultado.style.applymap(
+#        lambda val: 'background-color: #d4edda' if val is True else
+#                    'background-color: #f8d7da' if val is False else '',
+#        subset=['Atende Pressupostos']
+#    ))
+
+#    variaveis_validas = df_resultado[df_resultado['Atende Pressupostos']]['Variável'].tolist()
+#    st.markdown("✅ **Variáveis que atendem aos pressupostos da ANOVA:**")
+#    st.success(", ".join(variaveis_validas) if variaveis_validas else "Nenhuma variável válida encontrada.")
+#else:
+#    st.warning("Nenhuma variável categórica com dados suficientes foi avaliada.")
 
 
